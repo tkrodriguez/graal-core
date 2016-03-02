@@ -4,6 +4,7 @@ This changelog summarizes major changes between Graal versions relevant to devel
 
 ## `tip`
 * CompileTheWorld now includes class initializers.
+* Added support for JDK9 ReservedStackAccess annotation
 
 ## Version 0.12
 * Added initial code for AArch64 port.

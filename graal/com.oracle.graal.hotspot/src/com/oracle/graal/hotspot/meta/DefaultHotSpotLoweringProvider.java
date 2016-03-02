@@ -73,6 +73,7 @@ import com.oracle.graal.hotspot.nodes.G1ReferentFieldReadBarrier;
 import com.oracle.graal.hotspot.nodes.GetObjectAddressNode;
 import com.oracle.graal.hotspot.nodes.HotSpotDirectCallTargetNode;
 import com.oracle.graal.hotspot.nodes.HotSpotIndirectCallTargetNode;
+import com.oracle.graal.hotspot.nodes.ReservedStackAccessCheckNode;
 import com.oracle.graal.hotspot.nodes.SerialArrayRangeWriteBarrier;
 import com.oracle.graal.hotspot.nodes.SerialWriteBarrier;
 import com.oracle.graal.hotspot.nodes.type.KlassPointerStamp;
@@ -95,6 +96,7 @@ import com.oracle.graal.hotspot.replacements.arraycopy.ArrayCopySlowPathNode;
 import com.oracle.graal.hotspot.replacements.arraycopy.ArrayCopySnippets;
 import com.oracle.graal.hotspot.replacements.arraycopy.ArrayCopyUnrollNode;
 import com.oracle.graal.hotspot.replacements.arraycopy.UnsafeArrayCopySnippets;
+import com.oracle.graal.hotspot.stubs.ReservedStackOverflowSnippets;
 import com.oracle.graal.nodes.AbstractBeginNode;
 import com.oracle.graal.nodes.AbstractDeoptimizeNode;
 import com.oracle.graal.nodes.ConstantNode;
@@ -172,6 +174,7 @@ public class DefaultHotSpotLoweringProvider extends DefaultJavaLoweringProvider 
     protected AssertionSnippets.Templates assertionSnippets;
     protected ArrayCopySnippets.Templates arraycopySnippets;
     protected RuntimeStringSnippets.Templates runtimeStringSnippets;
+    protected ReservedStackOverflowSnippets.Templates reservedStackSnippets;
 
     public DefaultHotSpotLoweringProvider(HotSpotGraalRuntimeProvider runtime, MetaAccessProvider metaAccess, ForeignCallsProvider foreignCalls, HotSpotRegistersProvider registers,
                     HotSpotConstantReflectionProvider constantReflection, TargetDescription target) {
@@ -196,6 +199,7 @@ public class DefaultHotSpotLoweringProvider extends DefaultJavaLoweringProvider 
         assertionSnippets = new AssertionSnippets.Templates(providers, target);
         arraycopySnippets = new ArrayCopySnippets.Templates(providers, target);
         runtimeStringSnippets = new RuntimeStringSnippets.Templates(providers, target);
+        reservedStackSnippets = new ReservedStackOverflowSnippets.Templates(providers, target);
         providers.getReplacements().registerSnippetTemplateCache(new UnsafeArrayCopySnippets.Templates(providers, target));
     }
 
@@ -286,6 +290,8 @@ public class DefaultHotSpotLoweringProvider extends DefaultJavaLoweringProvider 
             assertionSnippets.lower((AssertionNode) n, tool);
         } else if (n instanceof RuntimeStringNode) {
             runtimeStringSnippets.lower((RuntimeStringNode) n, tool);
+        } else if (n instanceof ReservedStackAccessCheckNode) {
+            reservedStackSnippets.lower((ReservedStackAccessCheckNode) n, registers, tool);
         } else if (n instanceof IntegerDivNode || n instanceof IntegerRemNode || n instanceof UnsignedDivNode || n instanceof UnsignedRemNode) {
             // Nothing to do for division nodes. The HotSpot signal handler catches divisions by
             // zero and the MIN_VALUE / -1 cases.

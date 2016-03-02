@@ -133,8 +133,14 @@ public class SPARCHotSpotNodeLIRBuilder extends SPARCNodeLIRBuilder implements H
         append(new SPARCHotSpotPatchReturnAddressOp(gen.load(operand(address))));
     }
 
+    @Override
     public void emitJumpToExceptionHandler(ValueNode address) {
         append(new SPARCHotSpotJumpToExceptionHandlerOp(gen.load(operand(address))));
+    }
+
+    @Override
+    public void emitTailJumpToHandler(ForeignCallLinkage handler) {
+        append(new SPARCHotSpotTailJumpToHandlerOp(handler));
     }
 
     @Override

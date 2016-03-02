@@ -41,6 +41,7 @@ import com.oracle.graal.hotspot.stubs.Stub;
 import com.oracle.graal.hotspot.stubs.UncommonTrapStub;
 import com.oracle.graal.lir.asm.CompilationResultBuilder;
 import com.oracle.graal.nodes.StructuredGraph;
+import com.oracle.graal.word.Word;
 
 /**
  * Common functionality of HotSpot host backends.
@@ -60,6 +61,10 @@ public abstract class HotSpotHostBackend extends HotSpotBackend {
      * {@link HotSpotBackend.Options#PreferGraalStubs}.
      */
     public static final ForeignCallDescriptor UNCOMMON_TRAP_HANDLER = new ForeignCallDescriptor("uncommonTrapHandler", void.class);
+
+    public static final ForeignCallDescriptor ENABLE_STACK_RESERVED_ZONE = new ForeignCallDescriptor("enableStackReservedZoneEntry", void.class, Word.class);
+
+    public static final ForeignCallDescriptor THROW_DELAYED_STACKOVERFLOW_ERROR = new ForeignCallDescriptor("throwDelayedStackoverflowError", void.class);
 
     private final HotSpotVMConfig config;
 

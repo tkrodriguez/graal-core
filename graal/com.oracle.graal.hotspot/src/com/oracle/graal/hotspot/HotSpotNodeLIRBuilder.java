@@ -22,6 +22,7 @@
  */
 package com.oracle.graal.hotspot;
 
+import com.oracle.graal.compiler.common.spi.ForeignCallLinkage;
 import com.oracle.graal.compiler.match.MatchableNode;
 import com.oracle.graal.hotspot.nodes.CompressionNode;
 import com.oracle.graal.hotspot.nodes.DirectCompareAndSwapNode;
@@ -41,6 +42,8 @@ public interface HotSpotNodeLIRBuilder {
     default void emitJumpToExceptionHandler(ValueNode address) {
         emitPatchReturnAddress(address);
     }
+
+    void emitTailJumpToHandler(ForeignCallLinkage handler);
 
     void emitJumpToExceptionHandlerInCaller(ValueNode handlerInCallerPc, ValueNode exception, ValueNode exceptionPc);
 

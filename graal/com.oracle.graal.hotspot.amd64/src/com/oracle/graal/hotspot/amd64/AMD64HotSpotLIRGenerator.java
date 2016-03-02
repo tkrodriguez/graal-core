@@ -24,6 +24,7 @@ package com.oracle.graal.hotspot.amd64;
 
 import static com.oracle.graal.hotspot.HotSpotBackend.FETCH_UNROLL_INFO;
 import static com.oracle.graal.hotspot.HotSpotBackend.UNCOMMON_TRAP;
+import static com.oracle.graal.hotspot.HotSpotHostBackend.UNCOMMON_TRAP_HANDLER;
 import static jdk.vm.ci.amd64.AMD64.rbp;
 
 import java.util.ArrayList;
@@ -509,7 +510,7 @@ public class AMD64HotSpotLIRGenerator extends AMD64LIRGenerator implements HotSp
         Value actionAndReason = emitJavaConstant(getMetaAccess().encodeDeoptActionAndReason(action, reason, 0));
         Value nullValue = emitConstant(LIRKind.reference(AMD64Kind.QWORD), JavaConstant.NULL_POINTER);
         moveDeoptValuesToThread(actionAndReason, nullValue);
-        append(new AMD64HotSpotDeoptimizeCallerOp());
+        append(new AMD64HotSpotTailJumpToHandlerOp(getProviders().getForeignCalls().lookupForeignCall(UNCOMMON_TRAP_HANDLER)));
     }
 
     @Override

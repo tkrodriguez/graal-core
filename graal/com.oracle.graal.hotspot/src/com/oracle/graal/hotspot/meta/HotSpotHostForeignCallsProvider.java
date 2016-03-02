@@ -53,6 +53,8 @@ import static com.oracle.graal.hotspot.HotSpotForeignCallLinkage.Transition.LEAF
 import static com.oracle.graal.hotspot.HotSpotForeignCallLinkage.Transition.SAFEPOINT;
 import static com.oracle.graal.hotspot.HotSpotForeignCallLinkage.Transition.STACK_INSPECTABLE_LEAF;
 import static com.oracle.graal.hotspot.HotSpotHostBackend.DEOPTIMIZATION_HANDLER;
+import static com.oracle.graal.hotspot.HotSpotHostBackend.ENABLE_STACK_RESERVED_ZONE;
+import static com.oracle.graal.hotspot.HotSpotHostBackend.THROW_DELAYED_STACKOVERFLOW_ERROR;
 import static com.oracle.graal.hotspot.HotSpotHostBackend.UNCOMMON_TRAP_HANDLER;
 import static com.oracle.graal.hotspot.meta.DefaultHotSpotLoweringProvider.RuntimeCalls.CREATE_NULL_POINTER_EXCEPTION;
 import static com.oracle.graal.hotspot.meta.DefaultHotSpotLoweringProvider.RuntimeCalls.CREATE_OUT_OF_BOUNDS_EXCEPTION;
@@ -83,6 +85,7 @@ import static com.oracle.graal.replacements.Log.LOG_PRIMITIVE;
 import static com.oracle.graal.replacements.Log.LOG_PRINTF;
 import static jdk.vm.ci.hotspot.HotSpotCallingConventionType.NativeCall;
 
+import java.lang.reflect.Field;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -215,6 +218,39 @@ public abstract class HotSpotHostForeignCallsProvider extends HotSpotForeignCall
         }
     }
 
+    /**
+     * Employ reflection to read values that might not be available in {@link HotSpotVMConfig}.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T getOptionalHotSpotVMConfigField(String name, HotSpotVMConfig config, Class<? extends T> theClass) {
+        try {
+            Field f = HotSpotVMConfig.class.getDeclaredField(name);
+            f.setAccessible(true);
+            Object v = f.get(config);
+            if (theClass.isInstance(v)) {
+                return (T) v;
+            }
+        } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+        }
+        return null;
+    }
+
+    public static Long getEnableStackReservedZoneAddress(HotSpotVMConfig c) {
+        return getOptionalHotSpotVMConfigField("enableStackReservedZoneAddress", c, Long.class);
+    }
+
+    public static Long getThrowDelayedStackOverflowErrorEntry(HotSpotVMConfig c) {
+        return getOptionalHotSpotVMConfigField("throwDelayedStackOverflowErrorEntry", c, Long.class);
+    }
+
+    public static Integer getJavaThreadReservedStackActivationOffset(HotSpotVMConfig c) {
+        return getOptionalHotSpotVMConfigField("javaThreadReservedStackActivationOffset", c, Integer.class);
+    }
+
+    public static Integer getStackReservedPages(HotSpotVMConfig c) {
+        return getOptionalHotSpotVMConfigField("stackReservedPages", c, Integer.class);
+    }
+
     public void initialize(HotSpotProviders providers) {
         HotSpotVMConfig c = jvmciRuntime.getConfig();
         if (!PreferGraalStubs.getValue()) {
@@ -222,6 +258,14 @@ public abstract class HotSpotHostForeignCallsProvider extends HotSpotForeignCall
             registerForeignCall(UNCOMMON_TRAP_HANDLER, c.uncommonTrapStub, NativeCall, PRESERVES_REGISTERS, LEAF_NOFP, REEXECUTABLE, NO_LOCATIONS);
         }
         registerForeignCall(IC_MISS_HANDLER, c.inlineCacheMissStub, NativeCall, PRESERVES_REGISTERS, LEAF_NOFP, REEXECUTABLE, NO_LOCATIONS);
+
+        Long enableStackReservedZoneAddress = getEnableStackReservedZoneAddress(c);
+        if (enableStackReservedZoneAddress != null) {
+            registerForeignCall(ENABLE_STACK_RESERVED_ZONE, enableStackReservedZoneAddress, NativeCall, DESTROYS_REGISTERS, LEAF_NOFP, REEXECUTABLE, NO_LOCATIONS);
+            Long throwDelayedStackOverflowErrorEntry = getThrowDelayedStackOverflowErrorEntry(c);
+            assert throwDelayedStackOverflowErrorEntry != null;
+            registerForeignCall(THROW_DELAYED_STACKOVERFLOW_ERROR, throwDelayedStackOverflowErrorEntry, NativeCall, DESTROYS_REGISTERS, LEAF_NOFP, REEXECUTABLE, NO_LOCATIONS);
+        }
 
         registerForeignCall(JAVA_TIME_MILLIS, c.javaTimeMillisAddress, NativeCall, DESTROYS_REGISTERS, LEAF_NOFP, REEXECUTABLE, NO_LOCATIONS);
         registerForeignCall(JAVA_TIME_NANOS, c.javaTimeNanosAddress, NativeCall, DESTROYS_REGISTERS, LEAF_NOFP, REEXECUTABLE, NO_LOCATIONS);

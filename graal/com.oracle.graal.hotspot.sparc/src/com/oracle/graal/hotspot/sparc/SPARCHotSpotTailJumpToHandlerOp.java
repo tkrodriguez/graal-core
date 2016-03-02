@@ -22,11 +22,11 @@
  */
 package com.oracle.graal.hotspot.sparc;
 
-import static com.oracle.graal.hotspot.HotSpotHostBackend.UNCOMMON_TRAP_HANDLER;
 import jdk.vm.ci.code.Register;
 
 import com.oracle.graal.asm.sparc.SPARCMacroAssembler;
 import com.oracle.graal.asm.sparc.SPARCMacroAssembler.ScratchRegister;
+import com.oracle.graal.compiler.common.spi.ForeignCallLinkage;
 import com.oracle.graal.lir.LIRInstructionClass;
 import com.oracle.graal.lir.Opcode;
 import com.oracle.graal.lir.asm.CompilationResultBuilder;
@@ -35,13 +35,16 @@ import com.oracle.graal.lir.sparc.SPARCCall;
 /**
  * Removes the current frame and tail calls the uncommon trap routine.
  */
-@Opcode("DEOPT_CALLER")
-final class SPARCHotSpotDeoptimizeCallerOp extends SPARCHotSpotEpilogueOp {
-    public static final LIRInstructionClass<SPARCHotSpotDeoptimizeCallerOp> TYPE = LIRInstructionClass.create(SPARCHotSpotDeoptimizeCallerOp.class);
+@Opcode("TAIL_JUMP_TO_HANDLER")
+final class SPARCHotSpotTailJumpToHandlerOp extends SPARCHotSpotEpilogueOp {
+    public static final LIRInstructionClass<SPARCHotSpotTailJumpToHandlerOp> TYPE = LIRInstructionClass.create(SPARCHotSpotTailJumpToHandlerOp.class);
     public static final SizeEstimate SIZE = SizeEstimate.create(32);
 
-    protected SPARCHotSpotDeoptimizeCallerOp() {
+    private final ForeignCallLinkage handler;
+
+    protected SPARCHotSpotTailJumpToHandlerOp(ForeignCallLinkage handler) {
         super(TYPE, SIZE);
+        this.handler = handler;
     }
 
     @Override
@@ -56,7 +59,7 @@ final class SPARCHotSpotDeoptimizeCallerOp extends SPARCHotSpotEpilogueOp {
 
         try (ScratchRegister sc = masm.getScratchRegister()) {
             Register scratch = sc.getRegister();
-            SPARCCall.indirectJmp(crb, masm, scratch, crb.foreignCalls.lookupForeignCall(UNCOMMON_TRAP_HANDLER));
+            SPARCCall.indirectJmp(crb, masm, scratch, handler);
         }
 
         // frameContext.leave(crb);

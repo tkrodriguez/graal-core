@@ -24,6 +24,9 @@ package com.oracle.graal.hotspot.meta;
 
 import static com.oracle.graal.compiler.common.GraalOptions.ImmutableCode;
 import static com.oracle.graal.compiler.common.GraalOptions.VerifyPhases;
+
+import java.util.ListIterator;
+
 import jdk.vm.ci.hotspot.HotSpotVMConfig;
 
 import com.oracle.graal.hotspot.HotSpotBackend;
@@ -31,6 +34,7 @@ import com.oracle.graal.hotspot.HotSpotGraalRuntimeProvider;
 import com.oracle.graal.hotspot.HotSpotInstructionProfiling;
 import com.oracle.graal.hotspot.phases.AheadOfTimeVerificationPhase;
 import com.oracle.graal.hotspot.phases.LoadJavaMirrorWithKlassPhase;
+import com.oracle.graal.hotspot.phases.ReservedStackAccessCheckPhase;
 import com.oracle.graal.hotspot.phases.WriteBarrierAdditionPhase;
 import com.oracle.graal.hotspot.phases.WriteBarrierVerificationPhase;
 import com.oracle.graal.java.GraphBuilderPhase;
@@ -48,7 +52,9 @@ import com.oracle.graal.phases.PhaseSuite;
 import com.oracle.graal.phases.common.AddressLoweringPhase;
 import com.oracle.graal.phases.common.AddressLoweringPhase.AddressLowering;
 import com.oracle.graal.phases.common.ExpandLogicPhase;
+import com.oracle.graal.phases.common.LoweringPhase;
 import com.oracle.graal.phases.tiers.HighTierContext;
+import com.oracle.graal.phases.tiers.LowTierContext;
 import com.oracle.graal.phases.tiers.Suites;
 import com.oracle.graal.phases.tiers.SuitesCreator;
 
@@ -86,6 +92,13 @@ public class HotSpotSuitesProvider extends SuitesProviderBase {
         ret.getMidTier().appendPhase(new WriteBarrierAdditionPhase(config));
         if (VerifyPhases.getValue()) {
             ret.getMidTier().appendPhase(new WriteBarrierVerificationPhase(config));
+        }
+
+        Integer reservedStack = HotSpotHostForeignCallsProvider.getStackReservedPages(config);
+        if (reservedStack != null && reservedStack > 0) {
+            ListIterator<BasePhase<? super LowTierContext>> l = ret.getLowTier().findPhase(LoweringPhase.class);
+            l.previous();
+            l.add(new ReservedStackAccessCheckPhase());
         }
 
         ret.getLowTier().findPhase(ExpandLogicPhase.class).add(new AddressLoweringPhase(addressLowering));

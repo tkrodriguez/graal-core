@@ -24,6 +24,7 @@ package com.oracle.graal.hotspot.sparc;
 
 import static com.oracle.graal.hotspot.HotSpotBackend.FETCH_UNROLL_INFO;
 import static com.oracle.graal.hotspot.HotSpotBackend.UNCOMMON_TRAP;
+import static com.oracle.graal.hotspot.HotSpotHostBackend.UNCOMMON_TRAP_HANDLER;
 import static com.oracle.graal.lir.LIRValueUtil.asConstant;
 import static com.oracle.graal.lir.LIRValueUtil.isConstantValue;
 import static jdk.vm.ci.sparc.SPARC.d32;
@@ -274,7 +275,7 @@ public class SPARCHotSpotLIRGenerator extends SPARCLIRGenerator implements HotSp
         Value actionAndReason = emitJavaConstant(getMetaAccess().encodeDeoptActionAndReason(action, reason, 0));
         Value nullValue = emitJavaConstant(JavaConstant.NULL_POINTER);
         moveDeoptValuesToThread(actionAndReason, nullValue);
-        append(new SPARCHotSpotDeoptimizeCallerOp());
+        append(new SPARCHotSpotTailJumpToHandlerOp(getProviders().getForeignCalls().lookupForeignCall(UNCOMMON_TRAP_HANDLER)));
     }
 
     public Variable emitCompareAndSwap(Value address, Value expectedValue, Value newValue, Value trueValue, Value falseValue) {

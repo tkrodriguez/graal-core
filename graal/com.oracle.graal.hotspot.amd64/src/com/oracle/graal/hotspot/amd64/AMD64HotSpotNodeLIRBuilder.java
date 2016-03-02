@@ -161,6 +161,11 @@ public class AMD64HotSpotNodeLIRBuilder extends AMD64NodeLIRBuilder implements H
     }
 
     @Override
+    public void emitTailJumpToHandler(ForeignCallLinkage handler) {
+        append(new AMD64HotSpotTailJumpToHandlerOp(handler));
+    }
+
+    @Override
     public void emitJumpToExceptionHandlerInCaller(ValueNode handlerInCallerPc, ValueNode exception, ValueNode exceptionPc) {
         Variable handler = gen.load(operand(handlerInCallerPc));
         ForeignCallLinkage linkage = gen.getForeignCalls().lookupForeignCall(EXCEPTION_HANDLER_IN_CALLER);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,31 +20,34 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.graal.hotspot.amd64;
+package com.oracle.graal.hotspot.aarch64;
 
-import static com.oracle.graal.hotspot.HotSpotHostBackend.UNCOMMON_TRAP_HANDLER;
+import jdk.vm.ci.hotspot.HotSpotVMConfig;
 
-import com.oracle.graal.asm.amd64.AMD64MacroAssembler;
+import com.oracle.graal.asm.aarch64.AArch64MacroAssembler;
+import com.oracle.graal.compiler.common.spi.ForeignCallLinkage;
 import com.oracle.graal.lir.LIRInstructionClass;
 import com.oracle.graal.lir.Opcode;
-import com.oracle.graal.lir.amd64.AMD64Call;
+import com.oracle.graal.lir.aarch64.AArch64Call;
 import com.oracle.graal.lir.asm.CompilationResultBuilder;
 
 /**
  * Removes the current frame and tail calls the uncommon trap routine.
  */
-@Opcode("DEOPT_CALLER")
-final class AMD64HotSpotDeoptimizeCallerOp extends AMD64HotSpotEpilogueBlockEndOp {
+@Opcode("TAIL_JUMP_TO_HANDLER")
+public class AArch64HotSpotTailJumpToHandlerOp extends AArch64HotSpotEpilogueOp {
+    public static final LIRInstructionClass<AArch64HotSpotTailJumpToHandlerOp> TYPE = LIRInstructionClass.create(AArch64HotSpotTailJumpToHandlerOp.class);
 
-    public static final LIRInstructionClass<AMD64HotSpotDeoptimizeCallerOp> TYPE = LIRInstructionClass.create(AMD64HotSpotDeoptimizeCallerOp.class);
+    private final ForeignCallLinkage handler;
 
-    protected AMD64HotSpotDeoptimizeCallerOp() {
-        super(TYPE);
+    public AArch64HotSpotTailJumpToHandlerOp(HotSpotVMConfig config, ForeignCallLinkage handler) {
+        super(TYPE, config);
+        this.handler = handler;
     }
 
     @Override
-    public void emitCode(CompilationResultBuilder crb, AMD64MacroAssembler masm) {
-        leaveFrameAndRestoreRbp(crb, masm);
-        AMD64Call.directJmp(crb, masm, crb.foreignCalls.lookupForeignCall(UNCOMMON_TRAP_HANDLER));
+    public void emitCode(CompilationResultBuilder crb, AArch64MacroAssembler masm) {
+        leaveFrame(crb, masm, /* emitSafepoint */false);
+        AArch64Call.directJmp(crb, masm, handler);
     }
 }

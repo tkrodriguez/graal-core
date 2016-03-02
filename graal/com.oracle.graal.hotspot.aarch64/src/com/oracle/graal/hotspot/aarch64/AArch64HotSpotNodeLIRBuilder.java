@@ -29,6 +29,19 @@ import static jdk.vm.ci.hotspot.HotSpotVMConfig.config;
 import static jdk.vm.ci.hotspot.aarch64.AArch64HotSpotRegisterConfig.fp;
 import static jdk.vm.ci.hotspot.aarch64.AArch64HotSpotRegisterConfig.inlineCacheRegister;
 import static jdk.vm.ci.hotspot.aarch64.AArch64HotSpotRegisterConfig.metaspaceMethodRegister;
+import jdk.vm.ci.aarch64.AArch64Kind;
+import jdk.vm.ci.code.BytecodeFrame;
+import jdk.vm.ci.code.CallingConvention;
+import jdk.vm.ci.code.Register;
+import jdk.vm.ci.code.RegisterValue;
+import jdk.vm.ci.code.StackSlot;
+import jdk.vm.ci.code.ValueUtil;
+import jdk.vm.ci.hotspot.HotSpotCallingConventionType;
+import jdk.vm.ci.hotspot.HotSpotResolvedJavaMethod;
+import jdk.vm.ci.meta.AllocatableValue;
+import jdk.vm.ci.meta.JavaType;
+import jdk.vm.ci.meta.LIRKind;
+import jdk.vm.ci.meta.Value;
 
 import com.oracle.graal.compiler.aarch64.AArch64NodeLIRBuilder;
 import com.oracle.graal.compiler.aarch64.AArch64NodeMatchRules;
@@ -57,20 +70,6 @@ import com.oracle.graal.nodes.SafepointNode;
 import com.oracle.graal.nodes.StructuredGraph;
 import com.oracle.graal.nodes.ValueNode;
 import com.oracle.graal.nodes.spi.NodeValueMap;
-
-import jdk.vm.ci.aarch64.AArch64Kind;
-import jdk.vm.ci.code.BytecodeFrame;
-import jdk.vm.ci.code.CallingConvention;
-import jdk.vm.ci.code.Register;
-import jdk.vm.ci.code.RegisterValue;
-import jdk.vm.ci.code.StackSlot;
-import jdk.vm.ci.code.ValueUtil;
-import jdk.vm.ci.hotspot.HotSpotCallingConventionType;
-import jdk.vm.ci.hotspot.HotSpotResolvedJavaMethod;
-import jdk.vm.ci.meta.AllocatableValue;
-import jdk.vm.ci.meta.JavaType;
-import jdk.vm.ci.meta.LIRKind;
-import jdk.vm.ci.meta.Value;
 
 /**
  * LIR generator specialized for AArch64 HotSpot.
@@ -153,6 +152,11 @@ public class AArch64HotSpotNodeLIRBuilder extends AArch64NodeLIRBuilder implemen
     @Override
     public void emitPatchReturnAddress(ValueNode address) {
         append(new AArch64HotSpotPatchReturnAddressOp(gen.load(operand(address))));
+    }
+
+    @Override
+    public void emitTailJumpToHandler(ForeignCallLinkage handler) {
+        append(new AArch64HotSpotTailJumpToHandlerOp(getGen().config, handler));
     }
 
     @Override
