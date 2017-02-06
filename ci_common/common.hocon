@@ -1,0 +1,75 @@
+# overlay version
+overlay = e7c928133bbb4f347bbe14667dc16395e4d2de70
+
+java7 : {name : oraclejdk, version : "7",    platformspecific: true}
+java8 : {name : labsjdk, version : "8u111-jvmci-0.24-dev", platformspecific: true}
+java9 : {name : labsjdk, version : "9-SNAPSHOT", platformspecific: true}
+java9EA : {name : labsjdk, version : "9-ea+152", platformspecific: true}
+java8Debug : {name : labsjdk, version : "8u111-jvmci-0.24-dev-fastdebug", platformspecific: true}
+
+chdirToSuite : ["cd", ${suite-root}]
+common : {
+  setup : [${chdirToSuite}]
+  timelimit : "30:00"
+}
+
+commonLinux : ${common} {
+  packages : {
+    git : ">=1.8.3"
+    mercurial : ">=2.2"
+    "pip:astroid" : "==1.1.0"
+    "pip:pylint" : "==1.1.0"
+  }
+}
+
+commonSolaris : ${common} {
+  packages : {
+    git : ">=1.8.3"
+    mercurial : ">=2.2"
+    "pip:astroid" : "==1.1.0"
+    "pip:pylint" : "==1.1.0"
+  }
+}
+
+commonDarwin : ${common} {
+  packages : {
+    # Brew does not support versions
+    mercurial : ""
+    "pip:astroid" : "==1.1.0"
+    "pip:pylint" : "==1.1.0"
+  }
+}
+
+java8Downloads : {
+  downloads : {
+    EXTRA_JAVA_HOMES : { pathlist :[
+      ${java7}
+    ]}
+    JAVA_HOME : ${java8}
+  }
+}
+
+java8DownloadsDebug : {
+  downloads : {
+    EXTRA_JAVA_HOMES : { pathlist :[
+      ${java7}
+    ]}
+    JAVA_HOME : ${java8Debug}
+  }
+}
+
+java9Downloads : {
+  downloads : {
+    EXTRA_JAVA_HOMES : { pathlist :[
+      ${java7}
+      ${java8}
+    ]}
+    JAVA_HOME : ${java9}
+  }
+}
+
+java9EADownloads : ${java9Downloads} {
+  downloads : {
+    JAVA_HOME : ${java9EA}
+  }
+}
