@@ -38,7 +38,7 @@ public class BytecodeParserOptions {
     public static final OptionKey<Integer> TraceBytecodeParserLevel = new OptionKey<>(0);
 
     @Option(help = "Inlines trivial methods during bytecode parsing.", type = OptionType.Expert)
-    public static final OptionKey<Boolean> InlineDuringParsing = new OptionKey<>(true);
+    public static final OptionKey<Boolean> InlineDuringParsing = new OptionKey<>(false);
 
     @Option(help = "Inlines intrinsic methods during bytecode parsing.", type = OptionType.Expert)
     public static final OptionKey<Boolean> InlineIntrinsicsDuringParsing = new OptionKey<>(true);
